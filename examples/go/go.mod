@@ -1,7 +1,5 @@
-module provider-xyz
+module marmot-data-platform-example
 
 go 1.20
 
-require (
-	github.com/pulumi/pulumi/sdk/v3 v3.157.0
-)
+require github.com/pulumi/pulumi/sdk/v3 v3.30.0

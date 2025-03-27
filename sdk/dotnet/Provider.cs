@@ -7,11 +7,18 @@ using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Pulumi.Serialization;
 
-namespace Pulumi.Xyz
+namespace Pulumi.Marmot
 {
-    [XyzResourceType("pulumi:providers:xyz")]
+    [MarmotResourceType("pulumi:providers:marmot")]
     public partial class Provider : global::Pulumi.ProviderResource
     {
+        [Output("apiKey")]
+        public Output<string> ApiKey { get; private set; } = null!;
+
+        [Output("host")]
+        public Output<string> Host { get; private set; } = null!;
+
+
         /// <summary>
         /// Create a Provider resource with the given unique name, arguments, and options.
         /// </summary>
@@ -19,8 +26,8 @@ namespace Pulumi.Xyz
         /// <param name="name">The unique name of the resource</param>
         /// <param name="args">The arguments used to populate this resource's properties</param>
         /// <param name="options">A bag of options that control this resource's behavior</param>
-        public Provider(string name, ProviderArgs? args = null, CustomResourceOptions? options = null)
-            : base("xyz", name, args ?? new ProviderArgs(), MakeResourceOptions(options, ""))
+        public Provider(string name, ProviderArgs args, CustomResourceOptions? options = null)
+            : base("marmot", name, args ?? new ProviderArgs(), MakeResourceOptions(options, ""))
         {
         }
 
@@ -39,8 +46,11 @@ namespace Pulumi.Xyz
 
     public sealed class ProviderArgs : global::Pulumi.ResourceArgs
     {
-        [Input("itsasecret", json: true)]
-        public Input<bool>? Itsasecret { get; set; }
+        [Input("apiKey", required: true)]
+        public Input<string> ApiKey { get; set; } = null!;
+
+        [Input("host", required: true)]
+        public Input<string> Host { get; set; } = null!;
 
         public ProviderArgs()
         {

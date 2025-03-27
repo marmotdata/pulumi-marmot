@@ -5,47 +5,49 @@ import * as pulumi from "@pulumi/pulumi";
 import * as utilities from "./utilities";
 
 // Export members:
+export { AssetArgs } from "./asset";
+export type Asset = import("./asset").Asset;
+export const Asset: typeof import("./asset").Asset = null as any;
+utilities.lazyLoad(exports, ["Asset"], () => require("./asset"));
+
+export { LineageArgs } from "./lineage";
+export type Lineage = import("./lineage").Lineage;
+export const Lineage: typeof import("./lineage").Lineage = null as any;
+utilities.lazyLoad(exports, ["Lineage"], () => require("./lineage"));
+
 export { ProviderArgs } from "./provider";
 export type Provider = import("./provider").Provider;
 export const Provider: typeof import("./provider").Provider = null as any;
 utilities.lazyLoad(exports, ["Provider"], () => require("./provider"));
 
-export { RandomArgs } from "./random";
-export type Random = import("./random").Random;
-export const Random: typeof import("./random").Random = null as any;
-utilities.lazyLoad(exports, ["Random"], () => require("./random"));
-
-export { RandomComponentArgs } from "./randomComponent";
-export type RandomComponent = import("./randomComponent").RandomComponent;
-export const RandomComponent: typeof import("./randomComponent").RandomComponent = null as any;
-utilities.lazyLoad(exports, ["RandomComponent"], () => require("./randomComponent"));
-
 
 // Export sub-modules:
 import * as config from "./config";
+import * as types from "./types";
 
 export {
     config,
+    types,
 };
 
 const _module = {
     version: utilities.getVersion(),
     construct: (name: string, type: string, urn: string): pulumi.Resource => {
         switch (type) {
-            case "xyz:index:Random":
-                return new Random(name, <any>undefined, { urn })
-            case "xyz:index:RandomComponent":
-                return new RandomComponent(name, <any>undefined, { urn })
+            case "marmot:index:Asset":
+                return new Asset(name, <any>undefined, { urn })
+            case "marmot:index:Lineage":
+                return new Lineage(name, <any>undefined, { urn })
             default:
                 throw new Error(`unknown resource type ${type}`);
         }
     },
 };
-pulumi.runtime.registerResourceModule("xyz", "index", _module)
-pulumi.runtime.registerResourcePackage("xyz", {
+pulumi.runtime.registerResourceModule("marmot", "index", _module)
+pulumi.runtime.registerResourcePackage("marmot", {
     version: utilities.getVersion(),
     constructProvider: (name: string, type: string, urn: string): pulumi.ProviderResource => {
-        if (type !== "pulumi:providers:xyz") {
+        if (type !== "pulumi:providers:marmot") {
             throw new Error(`unknown provider type ${type}`);
         }
         return new Provider(name, <any>undefined, { urn });

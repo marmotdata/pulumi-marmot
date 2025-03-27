@@ -5,12 +5,20 @@ import * as pulumi from "@pulumi/pulumi";
 import * as utilities from "../utilities";
 
 declare var exports: any;
-const __config = new pulumi.Config("xyz");
+const __config = new pulumi.Config("marmot");
 
-export declare const itsasecret: boolean | undefined;
-Object.defineProperty(exports, "itsasecret", {
+export declare const apiKey: string | undefined;
+Object.defineProperty(exports, "apiKey", {
     get() {
-        return __config.getObject<boolean>("itsasecret");
+        return __config.get("apiKey");
+    },
+    enumerable: true,
+});
+
+export declare const host: string | undefined;
+Object.defineProperty(exports, "host", {
+    get() {
+        return __config.get("host");
     },
     enumerable: true,
 });

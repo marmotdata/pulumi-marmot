@@ -1,2 +1,2 @@
+pulumi-marmot==0.0.1-alpha.1743020949+ab1272ca.dirty
 pulumi>=3.0.0,<4.0.0
-pulumi-xyz==1.1.159

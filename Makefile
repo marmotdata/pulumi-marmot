@@ -1,10 +1,10 @@
-PROJECT_NAME := Pulumi Xyz Resource Provider
+PROJECT_NAME := Pulumi marmot Resource Provider
 
-PACK             := xyz
+PACK             := marmot
 PACKDIR          := sdk
-PROJECT          := github.com/pulumi/pulumi-xyz
-NODE_MODULE_NAME := @abc/xyz
-NUGET_PKG_NAME   := Abc.Xyz
+PROJECT          := github.com/marmotdata/pulumi-marmot
+NODE_MODULE_NAME := @marmotdata/marmot
+NUGET_PKG_NAME   := marmotdata.marmot
 
 PROVIDER        := pulumi-resource-${PACK}
 VERSION         ?= $(shell pulumictl get version)
@@ -162,3 +162,9 @@ install_go_sdk:
 install_nodejs_sdk:
 	-yarn unlink --cwd $(WORKING_DIR)/sdk/nodejs/bin
 	yarn link --cwd $(WORKING_DIR)/sdk/nodejs/bin
+
+gen-client:
+	rm -rf provider/internal/client/* 
+	# Fetch latest version from main repo
+	curl -s https://raw.githubusercontent.com/marmotdata/marmot/main/docs/swagger.yaml -o swagger.yaml
+	swagger generate client -f swagger.yaml -A marmot --target provider/internal/client

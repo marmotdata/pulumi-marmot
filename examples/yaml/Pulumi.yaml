@@ -1,20 +1,289 @@
-name: provider-xyz
+name: marmot-data-platform-example
 runtime: yaml
+description: A Pulumi YAML program demonstrating Marmot provider with multiple assets and lineage
 plugins:
   providers:
-    - name: xyz
+    - name: marmot
       path: ../../bin
 
+# Configuration for the Marmot provider with localhost connection
+config:
+  marmot:host: "http://localhost:8080"
+  marmot:apiKey: ${MARMOT_API_KEY}
+
 resources:
-  myRandomResource:
-    type: xyz:Random
+  # Kafka asset
+  kafkaAsset:
+    type: marmot:Asset
     properties:
-      length: 24
-  myRandomComponent:
-    type: xyz:RandomComponent
+      name: "customer-events-stream"
+      type: "Topic"
+      description: "Kafka stream for customer events"
+      services: ["Kafka"]
+      tags: ["events", "streaming", "real-time", "customer-data"]
+      metadata:
+        owner: "platform-team"
+        partitions: "24"
+        replication_factor: "3"
+        retention_ms: "604800000" # 7 days in milliseconds
+        security_protocol: "SASL_SSL"
+        compression_type: "lz4"
+        max_message_size: "1048576" # 1MB
+        group_id: "customer-events-consumers"
+      schema:
+        type: "avro"
+        doc: "Schema for customer events"
+        name: "CustomerEvent"
+        namespace: "com.example.events"
+        fields:
+          - name: "event_id"
+            type: "string"
+            doc: "Unique identifier for the event"
+          - name: "customer_id"
+            type: "string"
+            doc: "Customer identifier"
+          - name: "event_type"
+            type:
+              type: "enum"
+              name: "EventType"
+              symbols:
+                ["SIGN_UP", "LOGIN", "PURCHASE", "ACCOUNT_UPDATE", "LOGOUT"]
+          - name: "timestamp"
+            type: "long"
+            doc: "Event timestamp in milliseconds since epoch"
+          - name: "payload"
+            type:
+              type: "record"
+              name: "EventPayload"
+              fields:
+                - name: "session_id"
+                  type: ["null", "string"]
+                - name: "device_info"
+                  type:
+                    type: "record"
+                    name: "DeviceInfo"
+                    fields:
+                      - name: "type"
+                        type: ["null", "string"]
+                      - name: "os"
+                        type: ["null", "string"]
+                      - name: "browser"
+                        type: ["null", "string"]
+                - name: "properties"
+                  type:
+                    type: "map"
+                    values: "string"
+      externalLinks:
+        - name: "Kafka UI"
+          url: "http://kafka-ui.example.com"
+        - name: "Monitoring"
+          url: "http://grafana.example.com/kafka-dashboard"
+        - name: "Schema Registry"
+          url: "http://schema-registry.example.com/subjects/customer-events/versions/latest"
+          icon: "database-schema"
+        - name: "Documentation"
+          url: "http://docs.example.com/kafka/customer-events"
+          icon: "book"
+      environments:
+        dev:
+          name: "Development"
+          path: "dev-customer-events"
+          metadata:
+            retention_ms: "86400000" # 1 day in milliseconds
+            auto_create_topics: "true"
+            cleanup_policy: "delete"
+            min_insync_replicas: "1"
+            max_message_bytes: "1048576"
+        test:
+          name: "Testing"
+          path: "test-customer-events"
+          metadata:
+            retention_ms: "259200000" # 3 days in milliseconds
+            auto_create_topics: "true"
+            cleanup_policy: "delete"
+            min_insync_replicas: "2"
+            max_message_bytes: "1048576"
+        prod:
+          name: "Production"
+          path: "prod-customer-events"
+          metadata:
+            retention_ms: "604800000" # 7 days in milliseconds
+            auto_create_topics: "false"
+            cleanup_policy: "compact,delete"
+            min_insync_replicas: "2"
+            max_message_bytes: "1048576"
+            monitoring_enabled: "true"
+
+  # Postgres asset
+  postgresAsset:
+    type: marmot:Asset
     properties:
-      length: 24
+      name: "customer-data-warehouse"
+      type: "Database"
+      description: "PostgreSQL database for customer data"
+      services: ["PostgreSQL"]
+      tags: ["database", "warehouse", "structured-data"]
+      metadata:
+        owner: "data-team"
+        version: "14.5"
+        size: "medium"
+      schema:
+        tables:
+          - name: "customers"
+            description: "Customer records"
+            columns:
+              - name: "id"
+                type: "uuid"
+              - name: "email"
+                type: "varchar(255)"
+              - name: "created_at"
+                type: "timestamp"
+          - name: "orders"
+            description: "Customer orders"
+            columns:
+              - name: "id"
+                type: "uuid"
+              - name: "customer_id"
+                type: "uuid"
+              - name: "total"
+                type: "decimal(10,2)"
+      externalLinks:
+        - name: "Database Admin"
+          url: "http://pgadmin.example.com"
+      environments:
+        dev:
+          name: "Development"
+          path: "dev-db/customer_data"
+          metadata:
+            backup_frequency: "daily"
+        prod:
+          name: "Production"
+          path: "prod-db/customer_data"
+          metadata:
+            backup_frequency: "hourly"
+            ha_enabled: "true"
+
+  # S3 asset
+  S3Asset:
+    type: marmot:Asset
+    properties:
+      name: "customer-data-lake"
+      type: "Bucket"
+      description: "S3 bucket for customer data lake storage"
+      services: ["S3"]
+      tags: ["storage", "data-lake", "raw-data"]
+      metadata:
+        owner: "data-platform-team"
+        region: "us-west-2"
+        lifecycle_policy: "glacier-after-90-days"
+      externalLinks:
+        - name: "AWS Console"
+          url: "https://console.aws.amazon.com/S3/buckets/customer-data-lake"
+      environments:
+        dev:
+          name: "Development"
+          path: "dev-customer-data-lake"
+          metadata:
+            versioning: "enabled"
+        prod:
+          name: "Production"
+          path: "prod-customer-data-lake"
+          metadata:
+            versioning: "enabled"
+            encryption: "AES-256"
+
+  # Service asset
+  serviceAsset:
+    type: marmot:Asset
+    properties:
+      name: "order-processing-service"
+      type: "Service"
+      description: "Microservice for processing customer orders"
+      services: ["Kubernetes"]
+      tags: ["microservice", "orders", "processing"]
+      metadata:
+        owner: "order-team"
+        language: "golang"
+        version: "1.2.3"
+        repository: "github.com/example/order-processor"
+      externalLinks:
+        - name: "API Documentation"
+          url: "http://docs.example.com/order-api"
+        - name: "Monitoring Dashboard"
+          url: "http://grafana.example.com/order-service"
+        - name: "Repository"
+          url: "https://github.com/example/order-processor"
+          icon: "github"
+      environments:
+        dev:
+          name: "Development"
+          path: "dev/order-processor"
+          metadata:
+            replicas: "1"
+        prod:
+          name: "Production"
+          path: "prod/order-processor"
+          metadata:
+            replicas: "3"
+            autoscaling: "enabled"
+
+  # Lineage: Kafka -> Service
+  kafkaToServiceLineage:
+    type: marmot:Lineage
+    properties:
+      source: ${kafkaAsset.mrn}
+      target: ${serviceAsset.mrn}
+    options:
+      dependsOn:
+        - ${kafkaAsset}
+        - ${serviceAsset}
+      ignoreChanges:
+        - resourceId
+
+  # Lineage: Service -> Postgres
+  serviceToPostgresLineage:
+    type: marmot:Lineage
+    properties:
+      source: ${serviceAsset.mrn}
+      target: ${postgresAsset.mrn}
+    options:
+      dependsOn:
+        - ${serviceAsset}
+        - ${postgresAsset}
+      ignoreChanges:
+        - resourceId
+
+  # Lineage: Service -> S3
+  serviceToS3Lineage:
+    type: marmot:Lineage
+    properties:
+      source: ${serviceAsset.mrn}
+      target: ${S3Asset.mrn}
+    options:
+      dependsOn:
+        - ${serviceAsset}
+        - ${S3Asset}
+      ignoreChanges:
+        - resourceId
 
 outputs:
-  output:
-    value: ${myRandomResource.result}
+  kafkaAssetId:
+    value: ${kafkaAsset.resourceId}
+  kafkaAssetMrn:
+    value: ${kafkaAsset.mrn}
+  postgresAssetId:
+    value: ${postgresAsset.resourceId}
+  postgresAssetMrn:
+    value: ${postgresAsset.mrn}
+  S3AssetId:
+    value: ${S3Asset.resourceId}
+  S3AssetMrn:
+    value: ${S3Asset.mrn}
+  serviceAssetId:
+    value: ${serviceAsset.resourceId}
+  serviceAssetMrn:
+    value: ${serviceAsset.mrn}
+  kafkaToServiceLineageId:
+    value: ${kafkaToServiceLineage.resourceId}
+  serviceToPostgresLineageId:
+    value: ${serviceToPostgresLineage.resourceId}

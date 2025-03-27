@@ -1,6 +1,12 @@
-name: provider-xyz
+name: marmot-data-platform-example
 runtime: nodejs
+description: A Pulumi YAML program demonstrating Marmot provider with multiple assets and lineage
+config:
+  marmot:apiKey:
+    value: ${MARMOT_API_KEY}
+  marmot:host:
+    value: http://localhost:8080
 plugins:
   providers:
-    - name: xyz
+    - name: marmot
       path: ../../bin
